@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Standoff | High Stakes</title>
+  <title>STANDOFF | HIGH STAKES</title>
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap");
 
@@ -831,34 +831,6 @@
       color: #000;
     }
 
-    /* UPDATED CUE: Pulse on button */
-    @keyframes btn-pulse {
-      0% {
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-        transform: scale(1);
-        border-color: var(--c-reload);
-      }
-
-      50% {
-        box-shadow: 0 0 30px rgba(0, 240, 255, 0.8);
-        transform: scale(1.1);
-        border-color: #fff;
-      }
-
-      100% {
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-        transform: scale(1);
-        border-color: var(--c-reload);
-      }
-    }
-
-    /* Apply animation only when the class is present and NOT hovering 
-       (to prevent conflict with hover transforms) */
-    .help-btn.cue-active:not(:hover) {
-      animation: btn-pulse 2s infinite ease-in-out;
-      z-index: 600;
-    }
-
     .manual-panel {
       position: fixed;
       top: 0;
@@ -1019,7 +991,7 @@
     </div>
   </div>
 
-  <button class="help-btn cue-active" onclick="toggleHelp()">?</button>
+  <button class="help-btn" onclick="toggleHelp()">?</button>
 
   <div class="manual-panel" id="manual-panel">
     <div class="manual-header">
@@ -1068,14 +1040,14 @@
           <div class="cr-icon">1</div>
           <div class="cr-info">
             <strong>EARLY KILL (SLOT 1-2)</strong>
-            Safe play. Low multiplier (1.25x - 1.5x).
+            Safe play. Low multiplier (1.5x - 2.0x).
           </div>
         </div>
         <div class="card-ref" style="border-color:var(--c-jackpot)">
           <div class="cr-icon">5</div>
           <div class="cr-info">
             <strong>LATE KILL (SLOT 5)</strong>
-            High Risk. High multiplier (3.5x).
+            High Risk. High multiplier (8.0x).
           </div>
         </div>
       </div>
@@ -1198,7 +1170,7 @@
     };
 
     // HIGH STAKES MULTIPLIERS (Escalating returns based on turn)
-    const MULTIPLIERS = [1.25, 1.50, 1.75, 2.5, 3.5];
+    const MULTIPLIERS = [1.5, 2.0, 2.5, 4.0, 8.0];
 
     let state = {
       wallet: 100,
@@ -1224,14 +1196,6 @@
       div.innerHTML = `<span>></span>${msg}`;
       feed.appendChild(div);
       feed.scrollTop = feed.scrollHeight;
-    }
-
-    // Dismiss visual cue for Help (stops the pulsing)
-    function dismissCue() {
-      const btn = document.querySelector(".help-btn");
-      if (btn) {
-        btn.classList.remove("cue-active");
-      }
     }
 
     const mulberry32 = (a) => () => {
@@ -1292,9 +1256,6 @@
     }
 
     function startGame() {
-      // 2: Stop button pulse if player skips help and starts game
-      dismissCue();
-
       const val = parseInt(document.getElementById("bet-input").value);
       if (state.wallet < val) {
         addToFeed("INSUFFICIENT FUNDS", "loss");
@@ -1316,11 +1277,9 @@
         state.deck.pop(),
         state.deck.pop(),
         state.deck.pop(),
-        state.deck.pop(),
       ];
       state.hHand = optimize(
         [
-          state.deck.pop(),
           state.deck.pop(),
           state.deck.pop(),
           state.deck.pop(),
@@ -1333,6 +1292,7 @@
       render();
 
       // Let the deal animation play then enter strategy phase
+      // FIX: Increased duration to cover full stagger (9 * 90ms = 810ms) + animation (360ms) + buffer
       const dealDuration = 1300;
       setTimeout(() => {
         state.phase = "STRATEGY";
@@ -1473,14 +1433,15 @@
 
       const ctrl = document.getElementById("controls");
 
+      // FIX: Display Game Controls during DEAL phase (but disabled) for instant visual feedback
       const isDealing = state.phase === "DEAL";
 
       if (state.phase === "STRATEGY" || isDealing) {
         ctrl.innerHTML = `<button class="btn" onclick="doDraw()" ${state.selIdx === -1 || state.drawn || isDealing ? "disabled" : ""}>DISCARD & DRAW</button>
-                                                                  <button class="btn btn-primary" onclick="resolve()" ${isDealing ? "disabled" : ""}>INITIATE STANDOFF</button>`;
+                                          <button class="btn btn-primary" onclick="resolve()" ${isDealing ? "disabled" : ""}>INITIATE STANDOFF</button>`;
       } else {
         ctrl.innerHTML = `<div class="bet-interface"><label>ANTE</label><div class="bet-input-row"><span class="currency-prefix">$</span><input type="number" id="bet-input" value="${state.bet}" min="5" step="5"></div></div>
-                                                                  <button class="btn btn-primary" onclick="startGame()">DEAL HAND</button>`;
+                                          <button class="btn btn-primary" onclick="startGame()">DEAL HAND</button>`;
       }
 
       const drawH = (id, hand, isP) => {
@@ -1627,8 +1588,6 @@
     }
 
     function toggleHelp() {
-      // 1: Stop button pulse if player opens help
-      dismissCue();
       const panel = document.getElementById("manual-panel");
       panel.classList.toggle("open");
     }

@@ -1,0 +1,1295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>THE STANDOFF | HIGH STAKES</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap");
+
+      :root {
+        /* --- PALETTE --- */
+        --bg-dark: #120f1f;
+        --bg-panel: #1b1b20;
+
+        /* NEON ACCENTS (For Dark Cards) */
+        --c-shoot: #ff2a2a;
+        --c-reload: #00f0ff;
+        --c-block: #ad7958;
+        --c-tactical: #ffb800;
+        --c-quick: #d45cff;
+        --c-dud: #556677;
+
+        --c-win: #00ff41;
+        --c-jackpot: #ffd700;
+
+        --card-base: #1a1a1e; /* Dark Card Background */
+
+        --shadow-hard: 4px 4px 0px rgba(0, 0, 0, 0.9);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        /* Complex Pattern: Vignette + Grid + Diagonal Stripes */
+        background-image:
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(0, 0, 0, 0.2) 20%,
+            rgba(0, 0, 0, 0.9) 100%
+          ),
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          ),
+          repeating-linear-gradient(
+            45deg,
+            #120f1f 0px,
+            #120f1f 20px,
+            #1a162b 20px,
+            #1a162b 40px
+          );
+        background-size:
+          100% 100%,
+          40px 40px,
+          40px 40px,
+          100% 100%;
+        color: #fff;
+        font-family: "Press Start 2P", cursive;
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        user-select: none;
+        animation: bg-pan 60s linear infinite;
+      }
+
+      @keyframes bg-pan {
+        0% {
+          background-position:
+            center,
+            0 0,
+            0 0,
+            0 0;
+        }
+        100% {
+          background-position:
+            center,
+            0 0,
+            0 0,
+            100px 100px;
+        }
+      }
+
+      /* CRT Scanline Overlay */
+      body::after {
+        content: " ";
+        display: block;
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          rgba(18, 16, 16, 0) 50%,
+          rgba(0, 0, 0, 0.1) 50%
+        );
+        background-size: 100% 4px;
+        z-index: 999;
+        pointer-events: none;
+      }
+
+      /* --- HUD --- */
+      .hud {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px;
+        background: rgba(0, 0, 0, 0.8);
+        border-bottom: 2px solid #333;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .brand-title {
+        color: var(--c-tactical);
+        font-size: 20px;
+        text-shadow: 2px 2px 0 #000;
+        letter-spacing: -1px;
+      }
+      .brand-sub {
+        font-size: 8px;
+        color: #666;
+        letter-spacing: 2px;
+      }
+
+      .chips-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: #000;
+        padding: 10px 20px;
+        border: 2px solid #444;
+        border-radius: 4px;
+      }
+      .chips-label {
+        font-size: 10px;
+        color: #888;
+      }
+      .chips-val {
+        font-size: 18px;
+        color: #fff;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
+      .win-counter {
+        font-size: 12px;
+        color: var(--c-win);
+        margin-left: 10px;
+      }
+
+      /* --- STAGE --- */
+      .game-stage {
+        flex: 1;
+        display: flex;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* --- LEFT PANEL (FEED) --- */
+      .feed-panel {
+        width: 300px;
+        background: var(--bg-panel);
+        border-right: 2px solid #000;
+        box-shadow: 10px 0 20px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        z-index: 50;
+      }
+
+      .feed-header {
+        padding: 15px;
+        background: #000;
+        color: #666;
+        font-size: 10px;
+        text-align: center;
+        border-bottom: 1px solid #333;
+        letter-spacing: 2px;
+      }
+
+      .feed-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background: #111;
+        font-family: "VT323", monospace;
+        font-size: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        box-shadow: inset 0 0 20px #000;
+      }
+
+      .feed-content::-webkit-scrollbar {
+        width: 8px;
+      }
+      .feed-content::-webkit-scrollbar-track {
+        background: #000;
+      }
+      .feed-content::-webkit-scrollbar-thumb {
+        background: #333;
+        border: 1px solid #000;
+      }
+
+      .log-entry {
+        line-height: 1.1;
+        padding: 4px 0;
+        border-bottom: 1px solid #222;
+        color: #888;
+        animation: fadeIn 0.2s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .log-entry span {
+        color: #444;
+        font-size: 16px;
+        margin-right: 8px;
+      }
+      .log-sys {
+        color: #00ccaa;
+      }
+      .log-win {
+        color: var(--c-win);
+        text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+      }
+      .log-jackpot {
+        color: var(--c-jackpot);
+        font-weight: bold;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+      }
+      .log-loss {
+        color: var(--c-shoot);
+        opacity: 0.8;
+      }
+      .log-clash {
+        color: var(--c-tactical);
+      }
+
+      /* --- BOARD AREA --- */
+      .board {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        position: relative;
+        z-index: 10;
+        padding-bottom: 140px;
+      }
+
+      .result-banner {
+        height: 40px;
+        font-size: 32px;
+        text-shadow: 4px 4px 0 #000;
+        text-align: center;
+        margin-bottom: 10px;
+        opacity: 0;
+        transform: scale(0.9);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        pointer-events: none;
+      }
+      .result-banner.show {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      .res-win {
+        color: var(--c-win);
+        filter: drop-shadow(0 0 10px var(--c-win));
+      }
+      .res-jackpot {
+        color: var(--c-jackpot);
+        filter: drop-shadow(0 0 15px var(--c-jackpot));
+      }
+      .res-loss {
+        color: var(--c-shoot);
+        text-shadow: 4px 4px 0 #000;
+      }
+      .res-draw {
+        color: #fff;
+        text-shadow: 0 0 10px #fff;
+      }
+
+      /* --- HAND SECTIONS --- */
+      .hand-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .section-label {
+        font-size: 10px;
+        color: #555;
+        background: #0a0a0a;
+        padding: 4px 12px;
+        border: 1px solid #333;
+        border-radius: 20px;
+        letter-spacing: 2px;
+      }
+
+      .hand-container {
+        display: flex;
+        gap: 15px;
+        padding: 10px;
+        perspective: 1000px;
+      }
+
+      /* The "Slot" on the table */
+      .card-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        transition: background 0.2s;
+      }
+      .card-wrapper.active-slot {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .mult-tag {
+        font-family: "VT323";
+        font-size: 20px;
+        color: #666;
+        background: #000;
+        padding: 2px 8px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        min-width: 60px;
+        text-align: center;
+      }
+      .mult-high {
+        color: #000;
+        background: var(--c-jackpot);
+        border-color: #fff;
+        box-shadow: 0 0 10px var(--c-jackpot);
+        font-weight: bold;
+      }
+
+      /* --- CARDS (DARK PROTOCOL STYLE) --- */
+      .card {
+        width: 120px;
+        height: 170px;
+        background: var(--card-base);
+        border: 2px solid #333;
+        border-radius: 10px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+          box-shadow 0.25s,
+          border-color 0.25s;
+        cursor: default;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Inner detail line */
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        pointer-events: none;
+      }
+
+      .card-icon {
+        font-size: 42px;
+        z-index: 2;
+        margin-bottom: 12px;
+        filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.5));
+      }
+      .card-name {
+        font-size: 9px;
+        z-index: 2;
+        text-transform: uppercase;
+        text-align: center;
+        font-weight: bold;
+        letter-spacing: 1px;
+      }
+
+      /* Card Specific Styling - High Contrast Dark Mode */
+
+      /* SHOOT */
+      .card.shoot {
+        border-color: #500;
+        background: linear-gradient(135deg, #1a1a1e 0%, #2a0a0a 100%);
+      }
+      .card.shoot .card-icon,
+      .card.shoot .card-name {
+        color: var(--c-shoot);
+        text-shadow: 0 0 10px rgba(255, 26, 26, 0.4);
+      }
+      .card.shoot:hover {
+        box-shadow: 0 0 20px rgba(255, 26, 26, 0.3);
+        border-color: var(--c-shoot);
+      }
+
+      /* RELOAD - Dark Teal Background + Neon Cyan Icon */
+      .card.reload {
+        border-color: #00444d;
+        background: linear-gradient(135deg, #1a1a1e 0%, #052225 100%);
+      }
+      .card.reload .card-icon,
+      .card.reload .card-name {
+        color: var(--c-reload);
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+      }
+      .card.reload:hover {
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        border-color: var(--c-reload);
+      }
+
+      /* BLOCK */
+      .card.block {
+        border-color: #4a2e20;
+        background: linear-gradient(135deg, #1a1a1e 0%, #261812 100%);
+      }
+      .card.block .card-icon,
+      .card.block .card-name {
+        color: var(--c-block);
+      }
+      .card.block:hover {
+        box-shadow: 0 0 20px rgba(173, 121, 88, 0.3);
+        border-color: var(--c-block);
+      }
+
+      /* TACTICAL */
+      .card.tactical {
+        border-color: #665200;
+        background: linear-gradient(135deg, #1a1a1e 0%, #292200 100%);
+      }
+      .card.tactical .card-icon,
+      .card.tactical .card-name {
+        color: var(--c-tactical);
+        text-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+      }
+      .card.tactical:hover {
+        box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+        border-color: var(--c-tactical);
+      }
+
+      /* QUICKDRAW */
+      .card.quickdraw {
+        border-color: #550066;
+        background: linear-gradient(135deg, #1a1a1e 0%, #220029 100%);
+      }
+      .card.quickdraw .card-icon,
+      .card.quickdraw .card-name {
+        color: var(--c-quick);
+        text-shadow: 0 0 8px rgba(208, 0, 255, 0.5);
+      }
+      .card.quickdraw:hover {
+        box-shadow: 0 0 20px rgba(208, 0, 255, 0.3);
+        border-color: var(--c-quick);
+      }
+
+      /* DUD - FIXED */
+      .card.dud {
+        border-color: #333;
+        background: #0f0f12; /* Explicit darker background instead of transparency */
+        box-shadow: none;
+      }
+      /* Dim the content instead of the whole card */
+      .card.dud .card-icon,
+      .card.dud .card-name {
+        color: var(--c-dud);
+        opacity: 0.5;
+      }
+
+      /* FACE DOWN */
+      .card.face-down {
+        background: #111;
+        background-image: repeating-linear-gradient(
+          45deg,
+          #151515 0,
+          #151515 10px,
+          #1a1a1a 10px,
+          #1a1a1a 20px
+        );
+        border: 2px solid #333;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+      }
+      .card.face-down * {
+        display: none;
+      }
+
+      /* Interactions */
+      .card.draggable {
+        cursor: grab;
+      }
+
+      /* HOVER: Lift Only - No Background Color Change */
+      .card.draggable:hover {
+        transform: translateY(-20px) scale(1.05);
+        z-index: 10;
+      }
+      .card.draggable:active {
+        cursor: grabbing;
+      }
+
+      .card.selected-discard {
+        transform: translateY(-20px);
+        border-color: #fff !important;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2) !important;
+        animation: bounce 2s infinite ease-in-out;
+      }
+      .card.drag-gap {
+        opacity: 0.2;
+        transform: scale(0.9);
+        border: 2px dashed #fff;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      /* Overlays */
+      .ammo-readout {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        font-size: 10px;
+        color: #000;
+        background: #fff;
+        padding: 4px 6px;
+        border-radius: 2px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        z-index: 5;
+        font-weight: bold;
+      }
+
+      /* REFINED EMPTY STATE: Less intense, semi-transparent */
+      .dry-warning {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #ff5555;
+        font-size: 18px;
+        font-weight: bold;
+        background: rgba(0, 0, 0, 0.6); /* Darkened, transparent */
+        backdrop-filter: blur(1px); /* Slight blur for style */
+        z-index: 5;
+        border: 2px dashed rgba(255, 85, 85, 0.5);
+        border-radius: 8px;
+        letter-spacing: 2px;
+        text-shadow: 0 0 5px #ff0000;
+      }
+
+      /* End Game States */
+      .winner-card {
+        border-color: var(--c-win) !important;
+        box-shadow: 0 0 20px var(--c-win) !important;
+        transform: scale(1.1) !important;
+        z-index: 20;
+        background: #00220a !important;
+      }
+      .winner-card-gold {
+        border-color: var(--c-jackpot) !important;
+        box-shadow: 0 0 30px var(--c-jackpot) !important;
+        transform: scale(1.15) !important;
+        z-index: 20;
+        background: #221d00 !important;
+      }
+      .stalemate-card {
+        border-color: #fff !important;
+        box-shadow: 0 0 15px #fff !important;
+      }
+      .loser-card {
+        filter: grayscale(1) brightness(0.4);
+        opacity: 0.7;
+        transform: scale(0.95);
+      }
+
+      /* Tooltip */
+      .tooltip {
+        position: absolute;
+        bottom: -50px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 160px;
+        background: rgba(0, 0, 0, 0.9);
+        color: #fff;
+        border: 1px solid #333;
+        padding: 8px;
+        font-family: "VT323", monospace;
+        font-size: 16px;
+        text-align: center;
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        visibility: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 1);
+      }
+      .card:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+        transition-delay: 0.5s;
+      }
+      body.dragging-active .tooltip {
+        display: none;
+      }
+
+      /* --- CONTROLS --- */
+      .control-deck {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: calc(100% - 302px);
+        height: 120px;
+        background: #0f0f12;
+        border-top: 4px solid #222;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 30px;
+        z-index: 90;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .bet-interface {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+      .bet-interface label {
+        font-size: 8px;
+        color: #666;
+        letter-spacing: 1px;
+        margin-left: 2px;
+      }
+
+      .bet-input-row {
+        display: flex;
+        align-items: center;
+        background: #000;
+        border: 2px solid #444;
+        padding: 10px;
+        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5);
+      }
+      .currency-prefix {
+        font-family: "VT323";
+        font-size: 24px;
+        color: #444;
+        margin-right: 5px;
+      }
+      input[type="number"] {
+        border: none;
+        background: transparent;
+        padding: 0;
+        font-family: "VT323";
+        font-size: 24px;
+        width: 80px;
+        text-align: right;
+        outline: none;
+        color: var(--c-tactical);
+      }
+
+      .btn {
+        background: #333;
+        color: #fff;
+        border: none;
+        border-bottom: 6px solid #111;
+        padding: 15px 30px;
+        font-family: "Press Start 2P";
+        font-size: 12px;
+        cursor: pointer;
+        position: relative;
+        top: -6px;
+        transition: all 0.1s;
+        border-radius: 4px;
+        text-shadow: 1px 1px 0 #000;
+      }
+      .btn:active:not(:disabled) {
+        top: 0;
+        border-bottom: 0px solid #111;
+        transform: translateY(6px);
+      }
+
+      .btn-primary {
+        background: var(--c-shoot);
+        border-bottom-color: #990000;
+        box-shadow: 0 0 10px rgba(255, 42, 42, 0.4);
+      }
+      .btn-secondary {
+        background: var(--c-tactical);
+        border-bottom-color: #cc8800;
+        box-shadow: 0 0 10px rgba(255, 184, 0, 0.4);
+      }
+      .btn-secondary:hover {
+        background: #ffb800;
+      }
+
+      .btn:disabled {
+        background: #222;
+        border-bottom: 2px solid #111;
+        color: #555;
+        cursor: not-allowed;
+        top: 0;
+        box-shadow: none;
+        transform: none;
+      }
+
+      /* Animations */
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(-20px);
+        }
+        50% {
+          transform: translateY(-25px);
+        }
+      }
+      /* Shuffle / Deal / Draw animations */
+
+      .card.deal-in {
+        animation: deal-in 360ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+        transform-origin: 50% 50%;
+      }
+      @keyframes deal-in {
+        from {
+          transform: translateY(-40px) scale(0.85);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+
+      .card.discard-out {
+        animation: discard-out 300ms ease-in forwards;
+      }
+      @keyframes discard-out {
+        to {
+          transform: translateY(-40px) rotate(-6deg) scale(0.9);
+          opacity: 0;
+        }
+      }
+
+      .card.draw-in {
+        animation: draw-in 320ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+      }
+      @keyframes draw-in {
+        from {
+          transform: translateY(-30px) scale(0.9);
+          opacity: 0;
+        }
+        60% {
+          transform: translateY(6px) scale(1.03);
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+
+      .card.bounce-in {
+        animation: bounce-in 400ms ease-out;
+      }
+      @keyframes bounce-in {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <div class="brand">
+        <div class="brand-title">HIGH STAKES</div>
+        <div class="brand-sub">TACTICAL CARD BATTLE</div>
+      </div>
+      <div class="chips-container">
+        <span class="chips-label">BANK</span>
+        <span id="wallet" class="chips-val">$100.00</span>
+      </div>
+    </div>
+
+    <div class="game-stage">
+      <div class="feed-panel">
+        <div class="feed-header">TELEGRAPH</div>
+        <div class="feed-content" id="feed-box">
+          <div class="log-entry log-sys"><span>></span> SYSTEM READY</div>
+        </div>
+      </div>
+
+      <div class="board">
+        <div id="result-banner" class="result-banner"></div>
+        <div class="hand-section">
+          <div class="section-label">THE HOUSE</div>
+          <div class="hand-container" id="house-hand"></div>
+        </div>
+        <div class="hand-section">
+          <div class="section-label">PLAYER HAND</div>
+          <div class="hand-container" id="player-hand"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="control-deck" id="controls"></div>
+
+    <script>
+      // --- GAME CONSTANTS ---
+      const CARDS = {
+        RELOAD: {
+          icon: "↻",
+          name: "RELOAD",
+          class: "reload",
+          desc: "Gain 1 Ammo.",
+        },
+        SHOOT: {
+          icon: "🔥",
+          name: "SHOOT",
+          class: "shoot",
+          desc: "Spend 1 Ammo to Attack.",
+        },
+        BLOCK: {
+          icon: "🛡️",
+          name: "BLOCK",
+          class: "block",
+          desc: "Defend standard Attacks.",
+        },
+        TACTICAL: {
+          icon: "⭐",
+          name: "TACTICAL",
+          class: "tactical",
+          desc: "Block + Gain 1 Ammo.",
+        },
+        COUNTER: {
+          icon: "⚡",
+          name: "QUICKDRAW",
+          class: "quickdraw",
+          desc: "Faster strike. Costs 0 Ammo.",
+        },
+        MISFIRE: {
+          icon: "☠️",
+          name: "DUD",
+          class: "dud",
+          desc: "Jammed. No effect.",
+        },
+      };
+
+      const MULTIPLIERS = [1.25, 1.5, 1.75, 2.5, 3.5];
+
+      let state = {
+        wallet: 100,
+        bet: 15,
+        phase: "IDLE",
+        pHand: [],
+        hHand: [],
+        deck: [],
+        selIdx: -1,
+        drawn: false,
+        rng: null,
+        winT: -1,
+        winner: null,
+      };
+
+      let draggedIdx = null;
+
+      // --- UTILS ---
+      function addToFeed(msg, type = "sys") {
+        const feed = document.getElementById("feed-box");
+        const div = document.createElement("div");
+        div.className = `log-entry log-${type}`;
+        div.innerHTML = `<span>></span>${msg}`;
+        feed.appendChild(div);
+        feed.scrollTop = feed.scrollHeight;
+      }
+
+      const mulberry32 = (a) => () => {
+        var t = (a += 0x6d2b79f5);
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+
+      function getDeck() {
+        let d = [];
+        for (let i = 0; i < 12; i++) d.push("MISFIRE");
+        for (let i = 0; i < 16; i++) d.push("SHOOT");
+        for (let i = 0; i < 16; i++) d.push("RELOAD");
+        for (let i = 0; i < 4; i++) d.push("BLOCK");
+        for (let i = 0; i < 4; i++) d.push("TACTICAL");
+        for (let i = 0; i < 2; i++) d.push("COUNTER");
+        let r = state.rng;
+        for (let i = d.length - 1; i > 0; i--) {
+          let j = Math.floor(r() * (i + 1));
+          [d[i], d[j]] = [d[j], d[i]];
+        }
+        return d;
+      }
+
+      // --- LOGIC ---
+      function optimize(hand, playerHand) {
+        let pool = [...hand],
+          res = [null, null, null, null, null],
+          ammo = 0;
+        const pull = (t) => {
+          let idx = pool.indexOf(t);
+          if (idx !== -1) {
+            pool.splice(idx, 1);
+            return t;
+          }
+          return null;
+        };
+        for (let i = 4; i >= 0; i--) {
+          const playerLethal =
+            playerHand && ["SHOOT", "COUNTER"].includes(playerHand[i]);
+          if (playerLethal) res[i] = pull("TACTICAL") || pull("BLOCK");
+        }
+        for (let i = 0; i < 5; i++) {
+          if (res[i]) continue;
+          res[i] =
+            pull("COUNTER") ||
+            pull("TACTICAL") ||
+            (i === 1 ? pull("BLOCK") : null) ||
+            (ammo > 0 ? pull("SHOOT") : null) ||
+            pull("RELOAD") ||
+            pull("BLOCK") ||
+            pool.shift();
+          if (["RELOAD", "TACTICAL"].includes(res[i])) ammo++;
+          else if (res[i] === "SHOOT" && ammo > 0) ammo--;
+        }
+        return res;
+      }
+
+      function startGame() {
+        const val = parseInt(document.getElementById("bet-input").value);
+        if (state.wallet < val) {
+          addToFeed("INSUFFICIENT FUNDS", "loss");
+          return;
+        }
+        state.bet = val;
+        state.rng = mulberry32(Math.floor(Math.random() * 1e9));
+        state.deck = getDeck();
+        state.wallet -= val;
+        state.phase = "DEAL";
+        state.drawn = false;
+        state.selIdx = -1;
+        state.winT = -1;
+        state.winner = null;
+        // Populate hands from the deck
+        state.pHand = [
+          state.deck.pop(),
+          state.deck.pop(),
+          state.deck.pop(),
+          state.deck.pop(),
+          state.deck.pop(),
+        ];
+        state.hHand = optimize(
+          [
+            state.deck.pop(),
+            state.deck.pop(),
+            state.deck.pop(),
+            state.deck.pop(),
+            state.deck.pop(),
+          ],
+          state.pHand,
+        );
+        addToFeed(`STAKE LOCKED: $${val}`, "sys");
+        render();
+
+        // Let the deal animation play then enter strategy phase
+        // FIX: Increased duration to cover full stagger (9 * 90ms = 810ms) + animation (360ms) + buffer
+        const dealDuration = 1300;
+        setTimeout(() => {
+          state.phase = "STRATEGY";
+          state.drawn = false;
+          state.selIdx = -1;
+          render();
+        }, dealDuration);
+      }
+
+      function doDraw() {
+        if (state.selIdx === -1 || state.drawn) return;
+        // Mark pending draw and run discard animation
+        state.phase = "DRAW_ANIM";
+        state._pendingDraw = { sel: state.selIdx };
+        render();
+
+        // After animation, perform replacement and house adapt
+        setTimeout(() => {
+          // perform actual replacement
+          state.pHand[state._pendingDraw.sel] = state.deck.pop();
+          let hIdx = state.hHand.indexOf("MISFIRE");
+          if (hIdx === -1) hIdx = 4;
+          state.hHand[hIdx] = state.deck.pop();
+          state.hHand = optimize(state.hHand, state.pHand);
+          state.drawn = true;
+          state.selIdx = -1;
+          state._justDrewIndex = state._pendingDraw.sel;
+          delete state._pendingDraw;
+          state.phase = "STRATEGY";
+          addToFeed(`DISCARD PROCESSED. HOUSE ADAPTS.`, "sys");
+          render();
+
+          // Clear flash flag shortly after
+          setTimeout(() => {
+            delete state._justDrewIndex;
+            render();
+          }, 600);
+        }, 420);
+      }
+
+      function resolve() {
+        let pA = 0,
+          hA = 0,
+          win = null;
+        addToFeed("--- STANDOFF INITIATED ---", "sys");
+        for (let i = 0; i < 5; i++) {
+          let p = state.pHand[i],
+            h = state.hHand[i];
+          let pAct = p,
+            hAct = h;
+          if (p === "SHOOT") pAct = pA > 0 ? "FIRE" : "EMPTY";
+          if (h === "SHOOT") hAct = hA > 0 ? "FIRE" : "EMPTY";
+
+          let pLethal = pAct === "COUNTER" || pAct === "FIRE";
+          let hLethal = hAct === "COUNTER" || hAct === "FIRE";
+          let pDef =
+            pAct === "BLOCK" ||
+            pAct === "TACTICAL" ||
+            (pAct === "COUNTER" && hAct === "COUNTER");
+          let hDef =
+            hAct === "BLOCK" ||
+            hAct === "TACTICAL" ||
+            (hAct === "COUNTER" && pAct === "COUNTER");
+
+          if (pLethal && hLethal) {
+            if (pAct === "COUNTER" && hAct === "FIRE") {
+              win = "PLAYER";
+              state.winT = i;
+              break;
+            } else if (hAct === "COUNTER" && pAct === "FIRE") {
+              win = "HOUSE";
+              state.winT = i;
+              break;
+            }
+          } else if (pLethal && !hDef) {
+            win = "PLAYER";
+            state.winT = i;
+            break;
+          } else if (hLethal && !pDef) {
+            win = "HOUSE";
+            state.winT = i;
+            break;
+          }
+
+          if (["RELOAD", "TACTICAL"].includes(p)) pA++;
+          if (["RELOAD", "TACTICAL"].includes(h)) hA++;
+          if (pAct === "FIRE") pA--;
+          if (hAct === "FIRE") hA--;
+        }
+
+        state.winner = win || "DRAW";
+        let payout = 0;
+        if (state.winner === "PLAYER") {
+          const mult = MULTIPLIERS[state.winT];
+          payout = state.bet * mult;
+          addToFeed(
+            `WINNER: $${payout.toFixed(2)} (${mult}x)`,
+            mult >= 2.5 ? "jackpot" : "win",
+          );
+        } else if (state.winner === "HOUSE") {
+          addToFeed(`TERMINATED. STAKE LOST.`, "loss");
+        } else {
+          payout = state.bet;
+          addToFeed(`STALEMATE. REFUND ISSUED.`, "clash");
+        }
+        state.wallet += payout;
+        state.phase = "IDLE";
+        render();
+      }
+
+      // --- RENDER ---
+      function render() {
+        document.getElementById("wallet").innerText =
+          "$" + state.wallet.toFixed(2);
+
+        const resBanner = document.getElementById("result-banner");
+        if (state.phase === "IDLE" && state.winner) {
+          resBanner.className = "result-banner show";
+          if (state.winner === "PLAYER") {
+            const isJackpot = MULTIPLIERS[state.winT] >= 2.5;
+            resBanner.innerText = isJackpot ? "JACKPOT!" : "PLAYER WINS";
+            resBanner.className += isJackpot ? " res-jackpot" : " res-win";
+          } else if (state.winner === "HOUSE") {
+            resBanner.innerText = "HOUSE WINS";
+            resBanner.className += " res-loss";
+          } else {
+            resBanner.innerText = "STALEMATE";
+            resBanner.className += " res-draw";
+          }
+        } else {
+          resBanner.className = "result-banner";
+          resBanner.innerText = "";
+        }
+
+        const ctrl = document.getElementById("controls");
+
+        // FIX: Display Game Controls during DEAL phase (but disabled) for instant visual feedback
+        const isDealing = state.phase === "DEAL";
+
+        if (state.phase === "STRATEGY" || isDealing) {
+          ctrl.innerHTML = `<button class="btn" onclick="doDraw()" ${state.selIdx === -1 || state.drawn || isDealing ? "disabled" : ""}>DISCARD & DRAW</button>
+                                  <button class="btn btn-primary" onclick="resolve()" ${isDealing ? "disabled" : ""}>INITIATE STANDOFF</button>`;
+        } else {
+          ctrl.innerHTML = `<div class="bet-interface"><label>WAGER</label><div class="bet-input-row"><span class="currency-prefix">$</span><input type="number" id="bet-input" value="${state.bet}" min="5" step="5"></div></div>
+                                  <button class="btn btn-primary" onclick="startGame()">DEAL HAND</button>`;
+        }
+
+        const drawH = (id, hand, isP) => {
+          const container = document.getElementById(id);
+          container.innerHTML = "";
+          let am = 0;
+          hand.forEach((k, i) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "card-wrapper";
+            if (isP) {
+              if (state.selIdx === i) wrapper.classList.add("active-slot");
+            }
+
+            const el = document.createElement("div");
+            el.className = `card ${CARDS[k].class}`;
+            let overlay = "";
+
+            if (k === "SHOOT") {
+              if (isP || state.phase === "IDLE") {
+                if (am > 0) {
+                  overlay = `<div class="ammo-readout">${am}</div>`;
+                  am--;
+                } else {
+                  overlay = `<div class="dry-warning">EMPTY</div>`;
+                }
+              }
+            }
+            if (["RELOAD", "TACTICAL"].includes(k)) am++;
+
+            if (isP && state.phase === "STRATEGY" && !state.drawn) {
+              el.draggable = true;
+              el.classList.add("draggable");
+              el.onclick = () => {
+                state.selIdx = state.selIdx === i ? -1 : i;
+                render();
+              };
+              el.ondragstart = () => {
+                document.body.classList.add("dragging-active");
+                draggedIdx = i;
+                setTimeout(() => render(), 0);
+              };
+              el.ondragover = (e) => {
+                e.preventDefault();
+                const overEl = e.target.closest(".card");
+                if (!overEl) return;
+                const cards = [...container.querySelectorAll(".card")];
+                const overIdx = cards.indexOf(overEl);
+                if (draggedIdx !== overIdx) {
+                  const isMovingSelected = draggedIdx === state.selIdx;
+                  if (draggedIdx < state.selIdx) state.selIdx--;
+                  const item = state.pHand.splice(draggedIdx, 1)[0];
+                  if (overIdx <= state.selIdx) state.selIdx++;
+                  state.pHand.splice(overIdx, 0, item);
+                  if (isMovingSelected) state.selIdx = overIdx;
+                  draggedIdx = overIdx;
+                  drawH(id, state.pHand, isP);
+                }
+              };
+              el.ondragend = () => {
+                document.body.classList.remove("dragging-active");
+                draggedIdx = null;
+                render();
+              };
+            }
+
+            // DEAL ANIMATION: staggered entrance when in DEAL phase
+            if (state.phase === "DEAL") {
+              el.classList.add("deal-in");
+              // stagger: player 0-4, house 5-9 (so house deals after player visually)
+              const delayIndex = isP ? i : i + 5;
+              el.style.animationDelay = delayIndex * 90 + "ms";
+            }
+
+            // DISCARD / DRAW animation: when a draw is pending, animate the selected card out
+            if (
+              state.phase === "DRAW_ANIM" &&
+              isP &&
+              state._pendingDraw &&
+              state._pendingDraw.sel === i
+            ) {
+              el.classList.add("discard-out");
+            }
+
+            // New card pop when just drawn
+            if (state._justDrewIndex === i) {
+              el.classList.add("draw-in");
+            }
+
+            if (isP && draggedIdx === i) el.classList.add("drag-gap");
+            if (isP && state.selIdx === i) el.classList.add("selected-discard");
+
+            if (state.phase === "IDLE") {
+              if (state.winner === "DRAW") el.classList.add("stalemate-card");
+              else {
+                el.classList.add("loser-card");
+                if (
+                  state.winT === i &&
+                  ((isP && state.winner === "PLAYER") ||
+                    (!isP && state.winner === "HOUSE"))
+                ) {
+                  const isGold = MULTIPLIERS[i] >= 2.5 && isP;
+                  el.classList.remove("loser-card");
+                  el.classList.add(
+                    isGold ? "winner-card-gold" : "winner-card",
+                  );
+                }
+              }
+            }
+
+            if (!isP && state.phase !== "IDLE") {
+              // Keep animation classes (e.g., deal-in) but remove type-specific classes
+              [
+                "shoot",
+                "reload",
+                "block",
+                "tactical",
+                "quickdraw",
+                "dud",
+              ].forEach((c) => el.classList.remove(c));
+              el.classList.add("face-down");
+            } else {
+              el.classList.remove("face-down");
+              el.insertAdjacentHTML(
+                "beforeend",
+                `<div class="card-icon">${CARDS[k].icon}</div><div class="card-name">${CARDS[k].name}</div>${overlay}<div class="tooltip">${CARDS[k].desc}</div>`,
+              );
+            }
+
+            wrapper.appendChild(el);
+
+            if (isP) {
+              const mTag = document.createElement("div");
+              const isHigh = MULTIPLIERS[i] >= 2.5;
+              mTag.className = "mult-tag" + (isHigh ? " mult-high" : "");
+              mTag.innerText = MULTIPLIERS[i].toFixed(2) + "x";
+              wrapper.appendChild(mTag);
+            }
+
+            container.appendChild(wrapper);
+          });
+        };
+        drawH("player-hand", state.pHand, true);
+        drawH("house-hand", state.hHand, false);
+      }
+
+      render();
+    </script>
+  </body>
+</html>
